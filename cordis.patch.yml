@@ -1,0 +1,16 @@
+# dsh-sidebar-status — bundle patch layer.
+#
+# This file is the package's `dsh.bundle.patch` layer. Installing the package
+# (`dsh plugin --profile <name> add dsh-sidebar-status`) writes its name into the
+# profile's `dsh.profile.bundles`, the loader applies this patch, and the row
+# below is mounted. No manual YAML editing.
+#
+# NOTE — there is deliberately NO `inject:` list here. The loader entry is a HOST
+# fiber, and this plugin has no host-side behavior: everything it shows is read
+# on the browser side through the already mounted `account` Remote namespace.
+# Naming a host service that does not exist (`slots`, `locale` — both are
+# browser-side) would leave the fiber pending forever with no way to notice.
+# The browser-side dependencies live in package.json's `dsh.client.inject`.
+- insert:
+    - id: sidebar-status
+      name: 'dsh-sidebar-status'

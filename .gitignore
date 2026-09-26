@@ -1,0 +1,12 @@
+# dependencies / build output
+node_modules/
+*.tgz
+
+# editors / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# local scratch
+*.log

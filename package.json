@@ -1,0 +1,60 @@
+{
+  "name": "dsh-sidebar-status",
+  "version": "0.1.0",
+  "description": "DeepSeek account wallet balance and the live peak/off-peak billing period, in a fixed status region at the sidebar foot — plus a one-click official top-up link.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-api-remotes",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=18",
+    "dsh": ">=0.1.7-rc.2"
+  },
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "dsh-plugin",
+    "balance",
+    "account",
+    "sidebar",
+    "status",
+    "pricing",
+    "peak",
+    "off-peak",
+    "余额",
+    "峰谷"
+  ],
+  "license": "MIT",
+  "author": "sunzphy",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sunzphy/dsh-sidebar-status.git"
+  },
+  "homepage": "https://github.com/sunzphy/dsh-sidebar-status#readme",
+  "bugs": {
+    "url": "https://github.com/sunzphy/dsh-sidebar-status/issues"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ]
+}
