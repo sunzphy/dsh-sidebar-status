@@ -36,11 +36,29 @@ dsh plugin --profile web add github:sunzphy/dsh-sidebar-status
 
 | | |
 | --- | --- |
-| DSH | `>= 0.1.7-rc.2`（需要其中的 account 子系统） |
+| DSH | `>= 0.1.7-rc.2` —— 见下方两条说明 |
 | **已登录 DeepSeek 账号** | **余额必须** —— 走账号钱包，不读 `DEEPSEEK_API_KEY` |
 | 计价 | DeepSeek 中国大陆价目表 |
 
-### ⚠️ 关于「登录」有个平台前提
+### ⚠️ 版本：`0.1.7` 目前还在 `next` 通道
+
+余额依赖 DSH 的 **account 子系统**，它是 `0.1.7` 才加入的。而 npm 上：
+
+| npm 标签 | 版本 | account 子系统 |
+| --- | --- | --- |
+| `latest` | `0.1.5-rc.3` | ❌ 没有 |
+| `next` | `0.1.7-rc.2` | ✅ 有 |
+| `alpha` | `0.1.7-alpha.2` | ✅ 有 |
+
+`npx @deepseek-ai/dsh web` 装到的是 `latest` —— **只能看时段，拿不到余额**。要余额就显式装 `next`：
+
+```sh
+npx @deepseek-ai/dsh@next web
+```
+
+**DeepSeek Harness 桌面版自带 `0.1.7-rc.2`**，不用管这一条。
+
+### ⚠️ 登录：账号功能是桌面版专属
 
 **账号登录是桌面版（Electron）专属功能。** 官方代码里那部分是这样开头的：
 
