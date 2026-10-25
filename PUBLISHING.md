@@ -1,34 +1,53 @@
 # 发布流程
 
-给自己留的清单。**首次发布**做一遍「一次性准备」，之后每次发版走「发一个版本」。
+给自己留的清单。基于 2026-10-25 那次真实发布（v0.1.4，首个 npm 版本）写成。
 
-`YOUR-GITHUB-NAME` 是仓库里唯一的占位符，散落在 3 个地方：`package.json` 的 `repository` / `homepage` / `bugs`，以及 `README.md` 的安装命令与 Releases 链接。替换一次即可。
+**首次都做一遍；之后每次发版只走「发一个版本」。**
 
 ---
 
-## 一次性准备
+## 一次性准备（已完成，留档备查）
 
-### 1. 建仓库
+### 1. GitHub 仓库
 
-```sh
-cd dsh-sidebar-status
-git init
-git add -A
-git commit -m "feat: DeepSeek account balance and live peak/off-peak period in the sidebar foot"
-git branch -M main
-git remote add origin https://github.com/YOUR-GITHUB-NAME/dsh-sidebar-status.git
-git push -u origin main
+公开仓库：https://github.com/sunzphy/dsh-sidebar-status
+
+### 2. 精选列表收录（市场只允许装这里的来源）
+
+`data/plugins/sunzphy__dsh-sidebar-status.yml` 已提交，`category: usage`。
+
+```yaml
+url: https://github.com/sunzphy/dsh-sidebar-status
+name: sunzphy/dsh-sidebar-status
+category: usage
+description:
+  en: '...'
+  zh: '...'
 ```
 
-仓库**必须是公开的** —— 精选列表的条目就以 GitHub 地址为身份。
+> ⚠️ **不要手写 `npm:` 字段。** 官方 contributing.md 写明：npm 映射从 registry
+> **自动采集**，yml 里手写 `npm:` 会被校验拒绝。前提是包的 `repository` 字段指回
+> 收录的这个仓库 —— 这点 `package.json` 已经满足。
+> 采集有滞后，刚发布时 `plugins.json` 里还是 `npm: null`，属于正常。
 
-### 2. 确认包内容干净
+### 3. npm 账号与 2FA
 
-```sh
-npm pack --dry-run
-```
+- 账号：**`sunzphy18`**（`sunzphy` 那名字注册时绑在一个找不回的旧 Gmail 上，废了；
+  **npm 用户名注册后永久不能改**，别在这上面浪费时间）
+- `package.json` 的 `author` 要跟 npm 账号一致
+- **必须开 2FA 才能发布**，否则报 `E403 ... Two-factor authentication ... required to publish`
 
-应当只有 6 个文件：`package.json`、`cordis.patch.yml`、`README.md`、`LICENSE`、`lib/index.js`、`lib/client.js`。多出来的东西说明 `package.json` 的 `files` 需要调整。
+开 2FA 的方式：网页 `https://www.npmjs.com/settings/<用户名>/security` →
+Enable 2FA → 选 **Authorization and Publishing** → 验证器 App 扫码。
+
+> ⛔ **`npm profile enable-2fa` 命令行方式会失败**（`E403 - POST /-/npm/v1/user`）。
+> 原因：按 GitHub 2026-07-31 公告，bypass-2FA 的 granular token 不能再做账号设置类操作。
+> 只能用网页。
+
+### 4. `.npmrc` 的坑
+
+本机 `~/.npmrc` 默认 `registry=https://registry.npmmirror.com` —— **那是只读镜像，发布必失败**。
+所有发布命令都要显式带 `--registry=https://registry.npmjs.org/`，不要去改全局配置。
 
 ---
 
@@ -36,40 +55,79 @@ npm pack --dry-run
 
 ### 1. 升版本号
 
-改 `package.json` 的 `version`，同步更新 README 里出现的版本号。
+改 `package.json` 的 `version`。
 
-### 2. 打包并挂 Release
+### 2. 检查包内容
 
-```sh
-npm pack
+```powershell
+npm pack --dry-run
 ```
 
-到 GitHub 建一个 tag 与 Release，把生成的 `dsh-sidebar-status-<版本>.tgz` 作为附件传上去。
+应当只有 6 个文件：`package.json`、`cordis.patch.yml`、`README.md`、`LICENSE`、
+`lib/index.js`、`lib/client.js`。
 
-Release 是给「拉不动 GitHub 源码」的用户准备的 —— 市场安装会优先用 npm 包，其次才是 Release tarball，最后才回退整仓源码下载。
+### 3. 提交并推 GitHub
 
-### 3. 上架精选列表（只需做一次，除非改了名字）
-
-市场只允许安装 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 里的来源。fork 它，新建一个文件：
-
-**路径**：`data/plugins/YOUR-GITHUB-NAME__dsh-sidebar-status.yml`
-
-**内容**：
-
-```yaml
-url: https://github.com/YOUR-GITHUB-NAME/dsh-sidebar-status
-name: YOUR-GITHUB-NAME/dsh-sidebar-status
-category: usage
-description:
-  en: DeepSeek account wallet balance plus the live peak/off-peak billing period, in a fixed status region at the sidebar foot, with an official top-up link.
-  zh: 侧边栏底部固定状态区：DeepSeek 账号钱包余额、当前计费时段（高峰/空闲）、手动刷新与官方充值入口。
+```powershell
+git add -A
+git commit -F <提交信息文件>
+git push origin main
 ```
 
-提交 PR，加一条即可。站点（awesome-dsh-plugin.com）与 DSH 插件市场由 CI 每日刷新，通常一天内生效。**不要往市场自己的仓库提插件条目。**
+### 4. 发布到 npm
 
-### 4. 截图（可选，但值得）
+```powershell
+cd E:\ai程序\dsh\dsh-sidebar-status
+npm publish --registry=https://registry.npmjs.org/
+```
 
-市场卡片支持多图轮播。在 PR 里策展截图列表，或让市场在打开安装弹窗时从 README 自动抽取（图片需托管在 GitHub 图床上）。
+会弹出授权链接并要求 2FA 动态码（验证器 App 里的 6 位数字，**不是**邮箱验证码）。
+
+**成功标志**：`+ dsh-sidebar-status@<版本>`
+
+> npm 会先建一个 `0.0.0-stage` 占位包（`Temporary package placeholder for staged publishing`），
+> 这是正常的暂存机制，不占版本号。刚发布时 `curl` 可能只看到它 —— **等几分钟再查**，
+> 那时 `versions` 里才会出现真实版本，`latest` 也指向它。
+
+### 5. 挂 Release
+
+```powershell
+$dest="$env:TEMP\release"
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+npm pack --pack-destination $dest
+gh release create v<版本> "$dest\dsh-sidebar-status-<版本>.tgz" `
+  --repo sunzphy/dsh-sidebar-status --title "v<版本> — 一句话" --notes-file "$dest\notes.md"
+```
+
+> `gh release create` **必须带 `--repo`**，否则非 git 目录下会报
+> `failed to run git: fatal: not a git repository`。
+
+### 6. 验证（别省，这次踩过）
+
+```powershell
+# 官方源
+curl.exe -sS -o NUL -w "%{http_code}`n" https://registry.npmjs.org/dsh-sidebar-status/<版本>
+# 国内镜像（200 且版本对 = 国内免代理）
+curl.exe -sS https://registry.npmmirror.com/dsh-sidebar-status/latest
+# 真装一遍
+dsh plugin --profile tX add dsh-sidebar-status
+dsh plugin --profile tX remove dsh-sidebar-status
+```
+
+**测完删掉 `~/.dsh/profiles/tX`**，别留在真实 profile 列表里。
+
+---
+
+## 已知的坑（都踩过）
+
+| 坑 | 现象 | 处理 |
+|---|---|---|
+| 手写 `insert` 行装桌面版 | 插件**永久无法卸载**，提示「其他配置仍在使用」 | 只用 设置 → 插件 安装。详见 README |
+| 手工拷包进 `node_modules` | pnpm 挪进 `.ignored/`，日志 `not in the dependency tree` | 别拷。用 `dsh plugin add` 建 junction |
+| 往 npmmirror 发布 | 失败 | 显式 `--registry=https://registry.npmjs.org/` |
+| 命令行开 2FA | `E403 - POST /-/npm/v1/user` | 只能用网页开 |
+| 发布后立刻查 registry | 只看到 `0.0.0-stage` | 等几分钟；npm 在异步处理 |
+| 用 `author: sunzphy` 配 `sunzphy18` 账号 | 能发但作者名对不上 | 保持一致 |
 
 ---
 
@@ -77,24 +135,20 @@ description:
 
 **仓库是源码，profile 里应该是同一个目录 —— 不要再手工拷文件。**
 
-正确的开发装法是让 pnpm 建一条链接，改源码即刻生效：
-
 ```powershell
 dsh plugin --profile desktop add "E:\ai程序\dsh\dsh-sidebar-status"
 ```
 
-（桌面端这条命令会被拒 —— 改用一次性 profile 开发，或在桌面端 **设置 → 插件** 里用本地绝对路径安装。
-装完 `~/.dsh/profiles/desktop/node_modules/dsh-sidebar-status` 是指向仓库的 **junction**，
-以后改仓库里的文件就等于改 profile 里的那份，不存在"同步"这一步。）
+桌面端这条会被拒，改用 设置 → 插件 里用本地绝对路径装。装完
+`~/.dsh/profiles/desktop/node_modules/dsh-sidebar-status` 是指向仓库的 **junction**，
+改仓库就等于改 profile，没有"同步"这一步。
 
-> ⛔ **不要再 `Copy-Item` 到 `node_modules/`**，也**不要**往 `cordis.patch.yml` 手写 `insert` 行。
-> 前者会被 pnpm 当孤儿挪进 `node_modules/.ignored/`；
-> 后者会让插件**永久无法卸载** —— 用户手写的 insert 行不归插件管理器管，
-> 卸载时它判定 `bundle-in-use` 并拒绝（详见 README 的「卸载」一节）。
+只改 `lib/client.js` 时，客户端 HMR 约一秒重载，**不用重启**。改了 `lib/index.js`
+（宿主半侧）或接线行的 `inject` 才需要重启 —— 宿主模块被 ESM 缓存，热更不会重新导入。
 
-只改 `lib/client.js` 时，DSH 的客户端 HMR 会在约一秒内重载该 bundle，**不用重启**。改了 `lib/index.js`（宿主半侧）或接线行的 `inject` 字段才需要重启应用 —— 宿主模块会被 ESM 缓存，热更不会重新导入。
-
-**验证接线是否真的生效**：在宿主半侧的 `apply()` 里临时写一行日志到文件，重启后确认文件出现。曾经踩过的坑：补丁行写了 `inject: [slots, locale]` —— 那是**客户端**服务名，宿主没有，导致 fiber 永远 pending、`apply()` 从不执行，而插件在界面上看起来完全正常（client-modules 扫的是已启用条目，不等宿主激活）。
+**验证接线是否生效**：在 `apply()` 里临时写一行日志到文件，重启后确认文件出现。
+踩过的坑：补丁行写了 `inject: [slots, locale]` —— 那是**客户端**服务名，宿主没有，
+fiber 永远 pending、`apply()` 从不执行，而界面看起来完全正常。
 
 ---
 
@@ -102,8 +156,8 @@ dsh plugin --profile desktop add "E:\ai程序\dsh\dsh-sidebar-status"
 
 - [ ] `npm pack --dry-run` 只有 6 个文件
 - [ ] `package.json` 的 `version` 已升
-- [ ] 3 处 `YOUR-GITHUB-NAME` 已替换
+- [ ] `author` 与 npm 账号（`sunzphy18`）一致
 - [ ] 补丁行**没有** `inject:` 字段
-- [ ] 一次性 profile 里 `add` 装得上、`remove` 卸得掉（验证别人能装能卸）
-- [ ] 在自己的 profile 里装上、刷新、确认余额与时段都正常
+- [ ] 一次性 profile 里 `add` 装得上、`remove` 卸得掉
+- [ ] `npm publish` 后官方源 + npmmirror 都查到了新版本
 - [ ] `lib/client.js` 通过 `node --check`
