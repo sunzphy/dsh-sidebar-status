@@ -6,120 +6,17 @@ DeepSeek 账号余额 + 当前计费时段，固定在侧边栏底部。
   余额 ¥10.46  ⟳  ● 空闲时段            去充值
 ```
 
-- **余额** —— 充值余额 + 赠金余额（有赠金时才显示）
+- **余额** —— 充值余额 + 赠金余额（有赠金时才显示），需要登录 DeepSeek 账号
 - **⟳** —— 手动刷新
-- **时段** —— 官方口径的「高峰时段 / 空闲时段」，鼠标悬停看下一段什么时候开始
+- **时段** —— 高峰时段 / 空闲时段，鼠标悬停看下一段什么时候开始
 - **去充值** —— 打开官方充值页
 
 ## 安装
 
-```sh
-dsh plugin --profile web add github:sunzphy/dsh-sidebar-status
-```
+打开 DSH 的**插件市场**，搜索 `dsh-sidebar-status`，点安装。
 
-一条命令装好，刷新页面即可。
+装完刷新页面即可。卸载也在同一个界面。
 
-其它方式：
-
-- 从 [Releases](https://github.com/sunzphy/dsh-sidebar-status/releases) 下载 `.tgz`，然后 `dsh plugin --profile web add <文件路径>`
-- **桌面端（Electron）**：`dsh plugin --profile desktop …` 会被应用拒绝（`profile "desktop" is managed exclusively by the Electron application`）。所以桌面端请在 **设置 → 插件** 里装（内置的插件管理支持 npm 名、git URL、本地绝对路径），它走 `pnpm add` 并自动把包名写进 `dsh.profile.bundles`，**装完就能从同一个界面卸载**。
-
-  > ⚠️ **不要**往 `~/.dsh/profiles/desktop/cordis.patch.yml` 手写 `- insert:` 块。
-  > 用户手写的 insert 行不归插件管理器管（它只自动清理自己创建的 `mkt-*` 行），
-  > 于是卸载时 bundle 层撤掉了、你手写的那行还在跑，管理器判定
-  > `bundle-in-use`（界面提示「其他配置仍在使用这个组合包的组件」）并**永久拒绝卸载**。
-  > 本插件不需要手写插入行 —— 包自带的 `cordis.patch.yml` 已经提供了它。
-
-  > ⚠️ 也**不要**手工把包拷进 `node_modules/`。pnpm 不认，下次任何装/卸都会把它当孤儿挪进
-  > `node_modules/.ignored/`（日志里会出现 `It is not in the dependency tree`）。
-
-## 用它需要什么
-
-| | |
-| --- | --- |
-| DSH | `>= 0.1.7-rc.2` —— 见下方两条说明 |
-| **已登录 DeepSeek 账号** | **余额必须** —— 走账号钱包，不读 `DEEPSEEK_API_KEY` |
-| 计价 | DeepSeek 中国大陆价目表 |
-
-### ⚠️ 版本：`0.1.7` 目前还在 `next` 通道
-
-余额依赖 DSH 的 **account 子系统**，它是 `0.1.7` 才加入的。而 npm 上：
-
-| npm 标签 | 版本 | account 子系统 |
-| --- | --- | --- |
-| `latest` | `0.1.5-rc.3` | ❌ 没有 |
-| `next` | `0.1.7-rc.2` | ✅ 有 |
-| `alpha` | `0.1.7-alpha.2` | ✅ 有 |
-
-`npx @deepseek-ai/dsh web` 装到的是 `latest` —— **只能看时段，拿不到余额**。要余额就显式装 `next`：
-
-```sh
-npx @deepseek-ai/dsh@next web
-```
-
-**DeepSeek Harness 桌面版自带 `0.1.7-rc.2`**，不用管这一条。
-
-### ⚠️ 登录：账号功能是桌面版专属
-
-**账号登录是桌面版（Electron）专属功能。** 官方代码里那部分是这样开头的：
-
-```js
-function apply(ctx) {
-    if (!("dshDesktop" in globalThis)) return;   // 只在桌面渲染器里注册
-```
-
-所以：
-
-| 你的环境 | 结果 |
-| --- | --- |
-| 桌面版 + 已登录账号 | ✅ 余额 + 时段 |
-| 桌面版 + 只用 API Key | ⚠️ 只有时段 |
-| 纯网页版 `dsh web` | ⚠️ **只有时段**（网页版没有登录入口） |
-| 网页版，但之前在桌面版登录过 | ✅ 凭据是共享的，余额也能显示 |
-
-**只要能算出时段，这个插件就会显示时段** —— 时段是纯本地计算，跟账号无关。
-拿不到余额时，余额那部分静默省略，不会显示 0 或占位符。
-
-（如果你只用 API Key、不登录账号，这个插件不会给你余额 —— 那是另一条实现路线
-（`DEEPSEEK_API_KEY` + `api.deepseek.com/user/balance`），本插件刻意不走。）
-
-## 覆盖范围
-
-**高峰时段** = 北京时间周一至周五（不含中国法定节假日）9:00–12:00、14:00–18:00，单价是空闲时段的两倍。
-**空闲时段** = 其余全部，含周末与法定节假日全天。
-
-- 周末、固定日期的节日（元旦 / 劳动节 / 国庆）直接按规则判断
-- 清明用寿星公式
-- 春节 / 端午 / 中秋用**天文推算**（Meeus 新月级数 + `Intl` 月份标签），所以**没有任何需要每年维护的数据表**
-- **调休拼出来的连休不建模**：只因调休而放假的工作日会显示成高峰时段。这个误差只会把价格说得比实际贵，不会反过来
-
-余额只在**窗口聚焦**和**每轮回答结束**时读一次，没有定时轮询。
-
-## 卸载
-
-**Web 端 / 用 `dsh plugin` 装的：**
-
-```sh
-dsh plugin --profile web remove dsh-sidebar-status
-```
-
-**桌面端：** 设置 → 插件 里点卸载即可（和安装同一个界面）。
-
-**只有当年手写过 `insert` 行的那种装法**才需要手工收拾，顺序不能反
-（先删补丁行再删包，否则下次启动会因为补丁引用了已删除的包而起不来）：
-
-1. 删掉 `~/.dsh/profiles/desktop/cordis.patch.yml` 里那段 `- insert:` 块
-2. 删掉 `~/.dsh/profiles/desktop/package.json` 里 `dependencies` 下的 `dsh-sidebar-status`
-3. 删掉 `pnpm-lock.yaml` 里对应的三行 `dsh-sidebar-status:`
-4. 删掉 `node_modules/dsh-sidebar-status`（如果是 junction，只删链接不动源码）
-5. 删掉 `node_modules/.ignored/dsh-sidebar-status`（之前 pnpm 挪进去的旧副本）
-6. 重启 DSH
-
-## 实现细节
-
-插槽选择、CSS 覆盖方式、天文算法与验证数据，都写在源码注释里 ——
-`lib/client.js` 顶部的文件注释和各个 `#region` 段落。README 就不重复了。
-
-## 许可
+---
 
 MIT
