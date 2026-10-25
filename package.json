@@ -1,6 +1,6 @@
 {
   "name": "dsh-sidebar-status",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "DeepSeek account wallet balance and the live peak/off-peak billing period, in a fixed status region at the sidebar foot — plus a one-click official top-up link.",
   "type": "module",
   "main": "lib/index.js",
