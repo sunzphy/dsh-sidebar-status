@@ -22,15 +22,16 @@ dsh plugin --profile web add github:sunzphy/dsh-sidebar-status
 其它方式：
 
 - 从 [Releases](https://github.com/sunzphy/dsh-sidebar-status/releases) 下载 `.tgz`，然后 `dsh plugin --profile web add <文件路径>`
-- **桌面端（Electron）**：`--profile desktop` 会被应用拒绝。手工装的话，把包放进 `~/.dsh/profiles/desktop/node_modules/`，再往 `~/.dsh/profiles/desktop/cordis.patch.yml` 追加：
+- **桌面端（Electron）**：`dsh plugin --profile desktop …` 会被应用拒绝（`profile "desktop" is managed exclusively by the Electron application`）。所以桌面端请在 **设置 → 插件** 里装（内置的插件管理支持 npm 名、git URL、本地绝对路径），它走 `pnpm add` 并自动把包名写进 `dsh.profile.bundles`，**装完就能从同一个界面卸载**。
 
-  ```yaml
-  - insert:
-      - id: sidebar-status
-        name: 'dsh-sidebar-status'
-  ```
+  > ⚠️ **不要**往 `~/.dsh/profiles/desktop/cordis.patch.yml` 手写 `- insert:` 块。
+  > 用户手写的 insert 行不归插件管理器管（它只自动清理自己创建的 `mkt-*` 行），
+  > 于是卸载时 bundle 层撤掉了、你手写的那行还在跑，管理器判定
+  > `bundle-in-use`（界面提示「其他配置仍在使用这个组合包的组件」）并**永久拒绝卸载**。
+  > 本插件不需要手写插入行 —— 包自带的 `cordis.patch.yml` 已经提供了它。
 
-  ⚠️ **别在这行写 `inject:`。** 这是**宿主**条目，而本插件没有宿主侧行为。写一个宿主不存在的服务名（`slots`、`locale` 都是浏览器侧的）会让它永远起不来，而且界面上看不出任何异常。
+  > ⚠️ 也**不要**手工把包拷进 `node_modules/`。pnpm 不认，下次任何装/卸都会把它当孤儿挪进
+  > `node_modules/.ignored/`（日志里会出现 `It is not in the dependency tree`）。
 
 ## 用它需要什么
 
@@ -96,11 +97,23 @@ function apply(ctx) {
 
 ## 卸载
 
+**Web 端 / 用 `dsh plugin` 装的：**
+
 ```sh
 dsh plugin --profile web remove dsh-sidebar-status
 ```
 
-手工装的：删掉补丁文件里那几行，再删掉包目录。
+**桌面端：** 设置 → 插件 里点卸载即可（和安装同一个界面）。
+
+**只有当年手写过 `insert` 行的那种装法**才需要手工收拾，顺序不能反
+（先删补丁行再删包，否则下次启动会因为补丁引用了已删除的包而起不来）：
+
+1. 删掉 `~/.dsh/profiles/desktop/cordis.patch.yml` 里那段 `- insert:` 块
+2. 删掉 `~/.dsh/profiles/desktop/package.json` 里 `dependencies` 下的 `dsh-sidebar-status`
+3. 删掉 `pnpm-lock.yaml` 里对应的三行 `dsh-sidebar-status:`
+4. 删掉 `node_modules/dsh-sidebar-status`（如果是 junction，只删链接不动源码）
+5. 删掉 `node_modules/.ignored/dsh-sidebar-status`（之前 pnpm 挪进去的旧副本）
+6. 重启 DSH
 
 ## 实现细节
 

@@ -75,14 +75,22 @@ description:
 
 ## 本地开发与部署
 
-**仓库是源码，profile 里的那份是部署。** 改完同步过去：
+**仓库是源码，profile 里应该是同一个目录 —— 不要再手工拷文件。**
+
+正确的开发装法是让 pnpm 建一条链接，改源码即刻生效：
 
 ```powershell
-$repo = "E:\ai程序\dsh\dsh-sidebar-status"
-$deploy = "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\dsh-sidebar-status"
-Copy-Item "$repo\lib\client.js","$repo\lib\index.js" "$deploy\lib\" -Force
-Copy-Item "$repo\package.json","$repo\cordis.patch.yml","$repo\README.md","$repo\LICENSE" $deploy -Force
+dsh plugin --profile desktop add "E:\ai程序\dsh\dsh-sidebar-status"
 ```
+
+（桌面端这条命令会被拒 —— 改用一次性 profile 开发，或在桌面端 **设置 → 插件** 里用本地绝对路径安装。
+装完 `~/.dsh/profiles/desktop/node_modules/dsh-sidebar-status` 是指向仓库的 **junction**，
+以后改仓库里的文件就等于改 profile 里的那份，不存在"同步"这一步。）
+
+> ⛔ **不要再 `Copy-Item` 到 `node_modules/`**，也**不要**往 `cordis.patch.yml` 手写 `insert` 行。
+> 前者会被 pnpm 当孤儿挪进 `node_modules/.ignored/`；
+> 后者会让插件**永久无法卸载** —— 用户手写的 insert 行不归插件管理器管，
+> 卸载时它判定 `bundle-in-use` 并拒绝（详见 README 的「卸载」一节）。
 
 只改 `lib/client.js` 时，DSH 的客户端 HMR 会在约一秒内重载该 bundle，**不用重启**。改了 `lib/index.js`（宿主半侧）或接线行的 `inject` 字段才需要重启应用 —— 宿主模块会被 ESM 缓存，热更不会重新导入。
 
@@ -96,5 +104,6 @@ Copy-Item "$repo\package.json","$repo\cordis.patch.yml","$repo\README.md","$repo
 - [ ] `package.json` 的 `version` 已升
 - [ ] 3 处 `YOUR-GITHUB-NAME` 已替换
 - [ ] 补丁行**没有** `inject:` 字段
+- [ ] 一次性 profile 里 `add` 装得上、`remove` 卸得掉（验证别人能装能卸）
 - [ ] 在自己的 profile 里装上、刷新、确认余额与时段都正常
 - [ ] `lib/client.js` 通过 `node --check`
